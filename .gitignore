@@ -1,0 +1,4 @@
+Pipfile
+*.csv
+workspace
+.ipynb_checkpoints
