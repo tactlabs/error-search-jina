@@ -8,6 +8,7 @@ Source:
 
 # Import necessary modules
 from jina import Document, DocumentArray
+from jina import Flow
 
 
 def preprocess():
@@ -66,9 +67,53 @@ def prep_docs(input_file, num_size = -1, shuffle=True):
 
     return docs[:num_size]
 
+def somethings_going_on_here(docs):
+
+    for i in docs:
+        if len(i.text) == 0:
+            print(len(i.text))
+
+    model = "sentence-transformers/paraphrase-distilroberta-base-v1" # Any model from Huggingface
+
+    flow = (
+        Flow()
+        .add(
+            name="error_text_encoder",
+            uses="jinahub://TransformerTorchEncoder",
+            uses_with={"pretrained_model_name_or_path": model},
+        )
+        .add(
+            name="error_text_indexer",
+            uses='jinahub://SimpleIndexer',
+        )
+    )
+
+    with flow:
+        flow.index(
+            inputs=docs,
+        )
+
+    docs[0].text
+
+    query_doc = Document(text='nbformat.reader.NotJSONError: Notebook does not appear to be JSON')
+
+    with flow:
+        response = flow.search(inputs=query_doc, return_results=True)
+
+    matches = response[0].docs[0].matches
+
+
+    for ind, i in enumerate(matches):
+        print(f' error number : {ind} '.center(60,'='))
+        print(i.text)
+        print()
+
+   
 
 def startpy():
-    docs = prep_docs(input_file="prs.txt",num_size = -1, shuffle=True)
+    preprocess()
+    docs = prep_docs(input_file="prs.txt",num_size = -1, shuffle = True)
+    somethings_going_on_here(docs)
 
 
 if __name__ == '__main__':
