@@ -117,7 +117,6 @@ def somethings_going_on_here(docs):
 @app.route('/', methods=['GET'])
 def startpy():
     
-    preprocess()
     docs = prep_docs(input_file = "prs.txt", num_size = -1, shuffle = True)
     somethings_going_on_here(docs)
 
@@ -125,4 +124,6 @@ def startpy():
 
 
 if __name__ == '__main__':
-    startpy()
+
+    preprocess()
+    app.run(host="0.0.0.0", debug = True)
