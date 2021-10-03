@@ -7,6 +7,7 @@ Source:
 '''
 
 # Import necessary modules
+from flask.wrappers import Request
 from jina import Document, DocumentArray
 from jina import Flow
 from flask import Flask, render_template
@@ -117,13 +118,39 @@ def somethings_going_on_here(docs):
 @app.route('/', methods=['GET'])
 def startpy():
     
-    docs = prep_docs(input_file = "prs.txt", num_size = -1, shuffle = True)
-    somethings_going_on_here(docs)
+    # docs = prep_docs(input_file = "prs.txt", num_size = -1, shuffle = True)
+    # somethings_going_on_here(docs)
 
     return render_template('index.html')
 
 
+   
+@app.route('/', methods=['POST'])
+def post_search_results():
+    
+    # docs = prep_docs(input_file = "prs.txt", num_size = -1, shuffle = True)
+    # somethings_going_on_here(docs)
+
+    
+    data = [
+        {
+            "location" : "sample text",
+            "text" : "target query"
+        },
+        {
+            "location" : "sample text",
+            "text" : "target query"
+        },
+        {
+            "location" : "sample text",
+            "text" : "target query"
+        }
+    ]
+
+    return render_template('index.html', result = data)
+
+
 if __name__ == '__main__':
 
-    preprocess()
-    app.run(host="0.0.0.0", debug = True)
+    # preprocess()
+    app.run(host="0.0.0.0", port="5555", debug = True)
