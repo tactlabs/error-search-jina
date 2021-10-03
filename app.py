@@ -19,33 +19,6 @@ app = Flask(__name__)
 
 
 
-# def preprocess():
-
-#     delim = '---------------------------------------------------------------------------------------------------------------'
-#     length = len(delim)
-
-#     delim = f"{'-' * 111}/"
-
-#     my_file = open("prs.txt", "r")
-#     content = my_file.read()
-#     content_list = content.strip().split(f"{'-' * 111}/")
-#     my_file.close()
-
-#     for i in range(len(content_list)):
-#         if 'sol:' in content_list[i]:
-#             ind = i
-#             break
-
-#     samp = content_list[ind].replace('\n', ' ').strip()
-
-#     samp.split('sol:')[-1].strip()
-    
-#     docs = prep_docs()
-
-#     # somethings_going_on_here(docs)
-
-
-
 def prep_docs(input_file = "prs.txt", num_size = -1, shuffle = True):
     docs = DocumentArray()
     error = []
@@ -83,10 +56,10 @@ def prep_docs(input_file = "prs.txt", num_size = -1, shuffle = True):
     #         print(len(i.text))
 
 def indexing( docs ):
+
+    global flow
     
     model = "sentence-transformers/paraphrase-distilroberta-base-v1" # Any model from Huggingface
-    
-    global flow
 
     flow = (
         Flow()
@@ -101,50 +74,21 @@ def indexing( docs ):
         )
     )
 
-    with flow:
-        flow.index(
-            inputs=docs,
-        )
+    try:
+        with flow:
+            flow.index(
+                inputs=docs,
+            )
+
+    except RuntimeError as err:
+        print(err)
+
+        for doc in docs[:20]:
+            print(doc.tags['solution'])
 
     # return flow
 
-
-
-
-
-# def somethings_going_on_here(docs):
-
-#     for i in docs:
-#         if len(i.text) == 0:
-#             print(len(i.text))
-
-#     model = "sentence-transformers/paraphrase-distilroberta-base-v1" # Any model from Huggingface
-
-#     flow = (
-#         Flow()
-#         .add(
-#             name="error_text_encoder",
-#             uses="jinahub://TransformerTorchEncoder",
-#             uses_with={"pretrained_model_name_or_path": model},
-#         )
-#         .add(
-#             name="error_text_indexer",
-#             uses='jinahub://SimpleIndexer',
-#         )
-#     )
-
-#     with flow:
-#         flow.index(
-#             inputs=docs,
-#         )
-
-    # docs[0].text
-
-    
-
-
-    
-    
+  
 
    
 @app.route('/', methods=['GET'])
@@ -201,3 +145,71 @@ if __name__ == '__main__':
     indexing(docs)
 
     app.run(host="0.0.0.0", port="5555", debug = True)
+
+
+
+
+
+
+
+
+    # ------------------------------
+
+
+    # def preprocess():
+
+#     delim = '---------------------------------------------------------------------------------------------------------------'
+#     length = len(delim)
+
+#     delim = f"{'-' * 111}/"
+
+#     my_file = open("prs.txt", "r")
+#     content = my_file.read()
+#     content_list = content.strip().split(f"{'-' * 111}/")
+#     my_file.close()
+
+#     for i in range(len(content_list)):
+#         if 'sol:' in content_list[i]:
+#             ind = i
+#             break
+
+#     samp = content_list[ind].replace('\n', ' ').strip()
+
+#     samp.split('sol:')[-1].strip()
+    
+#     docs = prep_docs()
+
+#     # somethings_going_on_here(docs)
+
+
+
+
+
+
+# def somethings_going_on_here(docs):
+
+#     for i in docs:
+#         if len(i.text) == 0:
+#             print(len(i.text))
+
+#     model = "sentence-transformers/paraphrase-distilroberta-base-v1" # Any model from Huggingface
+
+#     flow = (
+#         Flow()
+#         .add(
+#             name="error_text_encoder",
+#             uses="jinahub://TransformerTorchEncoder",
+#             uses_with={"pretrained_model_name_or_path": model},
+#         )
+#         .add(
+#             name="error_text_indexer",
+#             uses='jinahub://SimpleIndexer',
+#         )
+#     )
+
+#     with flow:
+#         flow.index(
+#             inputs=docs,
+#         )
+
+    # docs[0].text
