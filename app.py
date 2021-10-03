@@ -9,6 +9,10 @@ Source:
 # Import necessary modules
 from jina import Document, DocumentArray
 from jina import Flow
+from flask import Flask, render_template
+
+
+app = Flask(__name__)
 
 
 def preprocess():
@@ -31,8 +35,6 @@ def preprocess():
     samp = content_list[ind].replace('\n', ' ').strip()
 
     samp.split('sol:')[-1].strip()
-
-
 
 
 def prep_docs(input_file, num_size = -1, shuffle=True):
@@ -108,12 +110,18 @@ def somethings_going_on_here(docs):
         print(i.text)
         print()
 
-   
+    
+    
 
+   
+@app.route('/', methods=['GET'])
 def startpy():
+    
     preprocess()
-    docs = prep_docs(input_file="prs.txt",num_size = -1, shuffle = True)
+    docs = prep_docs(input_file = "prs.txt", num_size = -1, shuffle = True)
     somethings_going_on_here(docs)
+
+    return render_template('index.html')
 
 
 if __name__ == '__main__':
