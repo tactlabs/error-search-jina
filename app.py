@@ -11,34 +11,42 @@ from flask.wrappers import Request
 from jina import Document, DocumentArray
 from jina import Flow
 from flask import Flask, render_template
+from jina.types import request
 
 
 app = Flask(__name__)
 
 
-def preprocess():
-
-    delim = '---------------------------------------------------------------------------------------------------------------'
-    length = len(delim)
-
-    delim = f"{'-' * 111}/"
-
-    my_file = open("prs.txt", "r")
-    content = my_file.read()
-    content_list = content.strip().split(f"{'-' * 111}/")
-    my_file.close()
-
-    for i in range(len(content_list)):
-        if 'sol:' in content_list[i]:
-            ind = i
-            break
-
-    samp = content_list[ind].replace('\n', ' ').strip()
-
-    samp.split('sol:')[-1].strip()
 
 
-def prep_docs(input_file, num_size = -1, shuffle=True):
+# def preprocess():
+
+#     delim = '---------------------------------------------------------------------------------------------------------------'
+#     length = len(delim)
+
+#     delim = f"{'-' * 111}/"
+
+#     my_file = open("prs.txt", "r")
+#     content = my_file.read()
+#     content_list = content.strip().split(f"{'-' * 111}/")
+#     my_file.close()
+
+#     for i in range(len(content_list)):
+#         if 'sol:' in content_list[i]:
+#             ind = i
+#             break
+
+#     samp = content_list[ind].replace('\n', ' ').strip()
+
+#     samp.split('sol:')[-1].strip()
+    
+#     docs = prep_docs()
+
+#     # somethings_going_on_here(docs)
+
+
+
+def prep_docs(input_file = "prs.txt", num_size = -1, shuffle = True):
     docs = DocumentArray()
     error = []
     print(f"Processing {input_file}")
@@ -63,20 +71,22 @@ def prep_docs(input_file, num_size = -1, shuffle=True):
         if len(doctext) > 99:
           doc = Document(text=doctext)
           sol = None
-          # if 'sol:' in doctext:
-          #   sol = doctext.split('sol:')[-1].strip()
-          # doc.tags['solution'] = sol
+          if 'sol:' in doctext:
+            sol = doctext.split('sol:')[-1].strip()
+          doc.tags['solution'] = sol
           docs.extend([doc])
 
     return docs[:num_size]
 
-def somethings_going_on_here(docs):
+    # for i in docs:
+    #     if len(i.text) == 0:
+    #         print(len(i.text))
 
-    for i in docs:
-        if len(i.text) == 0:
-            print(len(i.text))
-
+def indexing( docs ):
+    
     model = "sentence-transformers/paraphrase-distilroberta-base-v1" # Any model from Huggingface
+    
+    global flow
 
     flow = (
         Flow()
@@ -96,20 +106,42 @@ def somethings_going_on_here(docs):
             inputs=docs,
         )
 
-    docs[0].text
-
-    query_doc = Document(text='nbformat.reader.NotJSONError: Notebook does not appear to be JSON')
-
-    with flow:
-        response = flow.search(inputs=query_doc, return_results=True)
-
-    matches = response[0].docs[0].matches
+    # return flow
 
 
-    for ind, i in enumerate(matches):
-        print(f' error number : {ind} '.center(60,'='))
-        print(i.text)
-        print()
+
+
+
+# def somethings_going_on_here(docs):
+
+#     for i in docs:
+#         if len(i.text) == 0:
+#             print(len(i.text))
+
+#     model = "sentence-transformers/paraphrase-distilroberta-base-v1" # Any model from Huggingface
+
+#     flow = (
+#         Flow()
+#         .add(
+#             name="error_text_encoder",
+#             uses="jinahub://TransformerTorchEncoder",
+#             uses_with={"pretrained_model_name_or_path": model},
+#         )
+#         .add(
+#             name="error_text_indexer",
+#             uses='jinahub://SimpleIndexer',
+#         )
+#     )
+
+#     with flow:
+#         flow.index(
+#             inputs=docs,
+#         )
+
+    # docs[0].text
+
+    
+
 
     
     
@@ -131,6 +163,19 @@ def post_search_results():
     # docs = prep_docs(input_file = "prs.txt", num_size = -1, shuffle = True)
     # somethings_going_on_here(docs)
 
+    query_doc = Document(text=request.values("query_word"))
+
+
+    with flow:
+        response = flow.search(inputs=query_doc, return_results=True)
+
+    matches = response[0].docs[0].matches
+
+
+    for ind, i in enumerate(matches):
+        print(f' error number : {ind} '.center(60,'='))
+        print(i.text)
+        print()
     
     data = [
         {
@@ -152,5 +197,7 @@ def post_search_results():
 
 if __name__ == '__main__':
 
-    # preprocess()
+    docs = prep_docs()
+    indexing(docs)
+
     app.run(host="0.0.0.0", port="5555", debug = True)
