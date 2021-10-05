@@ -1,1 +1,1 @@
-# error-search-jina
+# error-search-elasticsearch

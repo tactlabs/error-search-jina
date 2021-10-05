@@ -1,8 +1,20 @@
-from inspect import Parameter
-from jina import Document, DocumentArray, Executor, requests
+'''
+Created on 
+Course work: 
+@author: vedha, ajesh, jaabir
+Source:
+    
+'''
+
+# Import necessary modules
+
+from jina import Document, DocumentArray
 from jina import Flow
 import random
-import os 
+import os
+
+
+
 
 def prep_docs(input_file = "prs.txt", num_size = -1, shuffle = True):
     docs = DocumentArray()
@@ -33,23 +45,14 @@ def prep_docs(input_file = "prs.txt", num_size = -1, shuffle = True):
     return docs[:num_size]
 
 
-class Validate(Executor):
-    @requests
-    def validate(self, docs, parameters, **kwargs):
-        # print(len(list(filter(lambda x : len(x.text) > 0, docs))))
-        return DocumentArray(list(filter(lambda x : len(x.text) > 0, docs)))
+def indexing( docs ):
+    
+    model = "sentence-transformers/paraphrase-distilroberta-base-v1" # Any model from Huggingface
+    
+    # global flow
 
-
-
-docs = prep_docs(num_size = 10)
-model = "sentence-transformers/paraphrase-distilroberta-base-v1" # Any model from Huggingface
-
-flow = (
+    flow = (
         Flow()
-        .add(
-            name='docsValidator',
-            uses=Validate,
-        )
         .add(
             name="error_text_encoder",
             uses="jinahub://TransformerTorchEncoder",
@@ -61,27 +64,34 @@ flow = (
         )
     )
 
-
-
-
-os.system('rm -rf workspace')
-with flow:
+    os.system('rm -rf workspace')
+    with flow:
         flow.index(
             inputs=docs,
-            docs = docs,
-            parameters = {'name' : 'someoen'}
         )
 
-# query = request.values.get('query_word')
-query = 'error'
-query_doc = Document(text = query, tags= {'solution' : None})
-print(query_doc)
+
+    return flow
+
+
+def search_results(flow, query):
+
+    query_doc = Document(text = query)
+    print(query_doc)
     
-with flow:
-    response = flow.search(inputs=query_doc, return_results=True)
+    with flow:
+        response = flow.search(inputs=query_doc, return_results=True)
+
+    matches = response[0].docs[0].matches
+    
+    data = [
+        {
+            "error_text" : doc.text,
+            "solution" : doc.tags['solution']
+        } for doc in matches
+    ]
+
+    return data
 
 
-print(response)
-matches = response[0].docs[0].matches
 
-# print(matches)
